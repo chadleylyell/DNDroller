@@ -1,4 +1,4 @@
-import board, terminalio, displayio, digitalio, random, supervisor
+import board, terminalio, displayio, digitalio, random, supervisor, microcontroller
 from adafruit_display_text import label
 from adafruit_ssd1351 import SSD1351
 from adafruit_debouncer import Debouncer
@@ -6,7 +6,7 @@ from time import sleep
 from adafruit_bitmapsaver import save_pixels
 
 # Disables auto-reload
-supervisor.runtime.autoreload = False
+supervisor.runtime.autoreload = True
 
 # Release any resources currently in use for the displays
 displayio.release_displays()
@@ -52,6 +52,13 @@ def whiteGreyDefine():
     else:
         return white
 
+def whiteGreyDefineUpdate(newColor):
+    if newColor == yellow:
+        return grey
+    else:
+        return white
+
+
 def colorDefine():
     if userPreference == "purple":
         return purple
@@ -69,16 +76,16 @@ def colorDefine():
         return teal
     if userPreference == "yellow":
         return yellow
-def colorUpdate(newColor, whiteBlackText):
-    D4_highlight.color = whiteBlackText
-    D6_highlight.color = whiteBlackText
-    D8_highlight.color = whiteBlackText
-    D10_highlight.color = whiteBlackText
-    D12_highlight.color = whiteBlackText
-    D20_highlight.color = whiteBlackText
-    D100_highlight.color = whiteBlackText
-    perc_highlight.color = whiteBlackText
-    colorSelect_highlight.color = whiteBlackText
+def colorUpdate(newColor):
+    D4_highlight.color = whiteGreyDefineUpdate(newColor)
+    D6_highlight.color = whiteGreyDefineUpdate(newColor)
+    D8_highlight.color = whiteGreyDefineUpdate(newColor)
+    D10_highlight.color = whiteGreyDefineUpdate(newColor)
+    D12_highlight.color = whiteGreyDefineUpdate(newColor)
+    D20_highlight.color = whiteGreyDefineUpdate(newColor)
+    D100_highlight.color = whiteGreyDefineUpdate(newColor)
+    perc_highlight.color = whiteGreyDefineUpdate(newColor)
+    colorSelect_highlight.color = whiteGreyDefineUpdate(newColor)
     #
     D4_highlight.background_color = newColor
     D6_highlight.background_color = newColor
@@ -92,6 +99,7 @@ def colorUpdate(newColor, whiteBlackText):
     #
     header.color = newColor
     roll_header.color = newColor
+    rolledHeader.color = newColor
 
 
 
@@ -141,8 +149,8 @@ for l in (D4_highlight, D6_highlight, D8_highlight, D10_highlight, D12_highlight
 screen.append(section2)
 D4_highlight.hidden = False
 
-# section1.hidden = True
-# section2.hidden = True
+section1.hidden = True
+section2.hidden = True
 
 
 
@@ -179,7 +187,7 @@ rolledScreen = displayio.Group()
 firstLast = displayio.Group()
 
 rolledHeader = label.Label(terminalio.FONT, text="", color=colorDefine(), x=2, y=4)
-continueSentence = label.Label(terminalio.FONT, text="Enter to continue", color=white, x=2, y=122)
+continueSentence = label.Label(terminalio.FONT, text="Enter to continue", color=white, x=50, y=122)
 firstLabel = label.Label(terminalio.FONT, text="First", color=red, x=2, y=100)
 lastLabel = label.Label(terminalio.FONT, text="Last", color=blue, x=45, y=100)
 
@@ -202,6 +210,51 @@ for k in (firstLabel, lastLabel):
     firstLast.append(k)
 rolledScreen.append(firstLast)
 
+# Create labels for color select screen
+
+optionsScreen = displayio.Group()
+
+colorSelectHeader = label.Label(terminalio.FONT, text="Please select new\ncolor:", color=colorDefine(), x=2, y=4)
+colorSelectBrackets = label.Label(terminalio.FONT, text="<        >", scale=2, color=white, x=2, y=60)
+colorSelectText = label.Label(terminalio.FONT, text="", scale=2, color=white, x=32, y=60)
+colorSelectConfirm = label.Label(terminalio.FONT, text="Enter to confirm", color=white, x=28, y=122)
+
+for l in (colorSelectHeader, colorSelectBrackets, colorSelectText, colorSelectConfirm):
+    optionsScreen.append(l)
+    optionsScreen.hidden = False
+screen.append(optionsScreen)
+
+colorSelectText.anchored_position = (0, 0)
+colorSelectText.text = "Yellow"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (40, 60)
+colorSelectText.text = "Red"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (30, 60)
+colorSelectText.text = "Blue"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (10, 60)
+colorSelectText.text = "Green"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (30, 60)
+colorSelectText.text = "Pink"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (30, 60)
+colorSelectText.text = "Teal"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (10, 60)
+colorSelectText.text = "Orange"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+sleep(2)
+colorSelectText.anchored_position = (10, 0)
+colorSelectText.text = "Purple"
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
 def setup_button(pin, pull=digitalio.Pull.UP):
     button = digitalio.DigitalInOut(pin)
     button.direction = digitalio.Direction.INPUT
@@ -219,9 +272,6 @@ Right = Debouncer(button_b)
 Down = Debouncer(button_c)
 Left = Debouncer(button_d)
 Enter = Debouncer(button_e)
-
-def hideRollLabels():
-    rollLabel.hidden = True
 
 def firstLastHighlight(choice):
     if choice == 1:
@@ -306,6 +356,7 @@ def displayDice(choice, dice, one, two, three, four, five, six, seven, eight, ni
             break
 
 def rollDice(rollChoice, dice): # one = rollChoice (user selected 1-9) from rollSelect() | two = dice from rollSelect() and what's highlighted upon user select in main loop. 
+    # save_pixels("/screenshot3.bmp", display)
     rollingCount = 0
     roll = ["", "", "", "", "", "", "", "", ""]
     while True:
@@ -369,12 +420,11 @@ def rollDice(rollChoice, dice): # one = rollChoice (user selected 1-9) from roll
 
 
 def rollSelect(var):
+    # save_pixels("/screenshot2.bmp", display)
     dice = var
     roll_highlight = "one"
-    rollSelectScreen.hidden = False
-    hideRollLabels()
     rollLabel.text = "1"
-    rollLabel.hidden = False
+    rollSelectScreen.hidden = False
     while True:
         Up.update()
         Right.update()
@@ -533,6 +583,9 @@ def rollSelect(var):
             rollDice(rollChoice, dice)
             break
 
+def colorSelect():
+    color_highlight = "red"
+
 
 
 def highlight_D4():
@@ -590,6 +643,16 @@ def highlight_C():
     colorSelect_highlight.hidden = False
     perc_highlight.hidden = True
 
+
+def writeText(variable):
+    print(variable)
+    try:
+        with open("/color.txt", "w") as fp:
+            fp.write('red')
+            fp.flush()
+    except OSError as e:
+        print(f"Error: {e}")
+
 highlight = "D4"
 while True:
     Up.update()
@@ -603,21 +666,24 @@ while True:
     #
     if Up.fell and highlight == "D4":
         highlight = "perc"
+        colorUpdate(blue)
         highlight_perc()
         continue
     if Right.fell and highlight == "D4":
         highlight = "D12"
+        colorUpdate(pink)
         highlight_D12()
         continue
     if Down.fell and highlight == "D4":
         highlight = "D6"
-        save_pixels("/screenshot.bmp", display)
+        writeText(highlight)
         # D20_text.background_color = red
         # D20_highlight.background_color = None # THIS WORKS
         highlight_D6()
         continue
     if Left.fell and highlight == "D4":
         highlight = "D12"
+        colorUpdate(yellow)
         highlight_D12()
         continue
     if Enter.fell and highlight == "D4":
@@ -644,6 +710,7 @@ while True:
         continue
     if Down.fell and highlight == "D6":
         highlight = "D8"
+        writeText(highlight)
         highlight_D8()
         continue
     if Left.fell and highlight == "D6":
@@ -825,6 +892,7 @@ while True:
         continue
     if Down.fell and highlight == "perc":
         highlight = "D4"
+        colorUpdate(purple)
         highlight_D4()
         continue
     if Left.fell and highlight == "perc":
